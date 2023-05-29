@@ -67,7 +67,9 @@ Some of the afflictions will very slightly raise the calories target:
 - IntestinalParasites
 - Broken Ribs
 
-Usually the muscle reduce by 0.02kg/22hrs (by default), but in unlikely situations like all the conditions are unmet it could be up to 0.06kg.
+Usually the muscle reduce by 0.02kg/22hrs (by default), but in unlikely situations like all the conditions are unmet it could be up to 0.08kg.
+
+Noted that gained muslce is taken into account for calories targets, so before the hard limits configured in the mod settings, you may hit a soft cap where you can only maintain your muscle and has trouble to gain more.
 
 ## Dependencies
 
