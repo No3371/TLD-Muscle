@@ -73,6 +73,6 @@ Noted that gained muslce is taken into account for calories targets, so before t
 
 ## Dependencies
 
-
 - [Moment](https://github.com/No3371/TLD-Moment)
-- [dommrogers's ModData](https://github.com/dommrogers/ModData/)
+- [ModData](https://github.com/dommrogers/ModData/)
+- [ModSettings](https://github.com/zeobviouslyfakeacc/ModSettings/)
