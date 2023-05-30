@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using Moment;
 using HarmonyLib;
 using Il2Cpp;
@@ -28,9 +28,6 @@ namespace Muscle
 
 			uConsole.RegisterCommand("reset_muscle", new Action(() => {
 				ModData.AppliedCarryWeight = Settings.options.init;
-			}));
-			uConsole.RegisterCommand("test_ev_object", new Action(() => {
-				Moment.Moment.ScheduleRelative(this, new EventRequest(new TLDDateTime(0, 0, 5), "test_ev_object", "2", "456"));
 			}));
 
 			Moment.Moment.RegisterExecutor(this);
@@ -199,10 +196,11 @@ namespace Muscle
 			requiredEaten *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.005f);
 			requiredEaten2 *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.005f);
             Muscle.Instance.Logger?.Msg($"------Slept last 24 hours: { slept24hrs }, eatenSince: { eatenSince } / {requiredEaten} / {requiredEaten2}, {GameManager.m_Condition.GetConditionLevel().ToString()} / {ConditionLevel.VeryInjured.ToString()}");
+			
+			ClearMuscle();
 			var impact = 0f;
 			if (slept24hrs <= 4 || eatenSince < requiredEaten || burnedSince < 20 * passedHours + 100 * Muscle.Instance.ModData.AppliedCarryWeight || GameManager.m_Condition.GetConditionLevel() >= ConditionLevel.VeryInjured)
 			{
-				ClearMuscle();
 				impact -= 0.02f * (passedHours/22f);
 				if (slept24hrs <= 6 && (eatenSince < requiredEaten || GameManager.m_Condition.GetConditionLevel() >= ConditionLevel.Injured))
 					impact -= 0.02f * (passedHours/22f);
@@ -210,8 +208,12 @@ namespace Muscle
 					impact -= 0.02f * (passedHours/22f);
 				if (slept24hrs <= 2 || eatenSince < requiredEaten2 || GameManager.m_Condition.GetConditionLevel() >= ConditionLevel.NearDeath)
 					impact -= 0.02f * (passedHours/22f);
-				ApplyMuscle(impact * Settings.options.reductionScale);
 				Muscle.Instance.Logger?.Msg($"------Muscle reduced: {impact * Settings.options.reductionScale}kg...");
+			}
+			if (impact != 0)
+			{
+				Muscle.Instance.ModData.AppliedCarryWeight += impact;
+				ApplyMuscle(Muscle.Instance.ModData.AppliedCarryWeight);
 			}
 			ModData.LastCaloriesBurned_Losing = GameManager.m_PlayerGameStats.m_CaloriesBurned;
 			ModData.LastCaloriesEaten_Losing = GameManager.m_PlayerGameStats.m_CaloriesEaten;
