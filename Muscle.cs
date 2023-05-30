@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using Moment;
 using HarmonyLib;
 using Il2Cpp;
@@ -73,10 +73,10 @@ namespace Muscle
 			encumber.m_EncumberHighThresholdKG -= appliedCarryWeight;
 
 			var fatigue = GameManager.m_Fatigue;
-			fatigue.m_FatigueIncreasePerHourStanding = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourStanding + appliedCarryWeight * 0.06f, 1f, 5);
-			fatigue.m_FatigueIncreasePerHourWalking = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourWalking + appliedCarryWeight * 0.06f, 1f, 10);
-			fatigue.m_FatigueIncreasePerHourSprintingMin = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMin + appliedCarryWeight * 0.5f, 1f, 100);
-			fatigue.m_FatigueIncreasePerHourSprintingMax = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMax + appliedCarryWeight * 0.5f, 1f, 200);
+			fatigue.m_FatigueIncreasePerHourStanding = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourStanding + appliedCarryWeight * 0.08f, 1f, 5);
+			fatigue.m_FatigueIncreasePerHourWalking = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourWalking + appliedCarryWeight * 0.08f, 1f, 10);
+			fatigue.m_FatigueIncreasePerHourSprintingMin = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMin + appliedCarryWeight * 0.7f, 1f, 100);
+			fatigue.m_FatigueIncreasePerHourSprintingMax = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMax + appliedCarryWeight * 0.7f, 1f, 200);
 
 			fatigue.m_RestedThreshold = Mathf.Clamp(fatigue.m_RestedThreshold - appliedCarryWeight, 0, 99.9f);
 			fatigue.m_SlightlyTiredThreshold = Mathf.Clamp(fatigue.m_SlightlyTiredThreshold - appliedCarryWeight, 0, 99.9f);
@@ -88,8 +88,8 @@ namespace Muscle
 
 			var climb = GameManager.m_PlayerClimbRope;
 			climb.m_FatigueDrainPerSecondClimbingUp = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingUp + appliedCarryWeight * 0.02f, 0.1f, 1);
-			climb.m_FatigueDrainPerSecondClimbingHolding = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingHolding + appliedCarryWeight * 0.02f, 0.1f, 1);
-			climb.m_FatigueDrainPerSecondClimbingDown = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingDown + appliedCarryWeight * 0.02f, 0.1f, 1);
+			climb.m_FatigueDrainPerSecondClimbingHolding = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingHolding + appliedCarryWeight * 0.01f, 0.1f, 1);
+			climb.m_FatigueDrainPerSecondClimbingDown = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingDown + appliedCarryWeight * 0.01f, 0.1f, 1);
 			Muscle.Instance.Logger?.Msg($"Climb: { climb.m_FatigueDrainPerSecondClimbingUp } / {climb.m_FatigueDrainPerSecondClimbingHolding} / { climb.m_FatigueDrainPerSecondClimbingDown }");
 
 			var move = GameManager.m_PlayerMovement;
@@ -119,10 +119,10 @@ namespace Muscle
 			encumber.m_EncumberHighThresholdKG += muscle;
 
 			var fatigue = GameManager.m_Fatigue;
-			fatigue.m_FatigueIncreasePerHourStanding = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourStanding - muscle * 0.06f, 1f, 5);
-			fatigue.m_FatigueIncreasePerHourWalking = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourWalking - muscle * 0.06f, 1f, 10);
-			fatigue.m_FatigueIncreasePerHourSprintingMin = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMin - muscle * 0.5f, 1f, 100);
-			fatigue.m_FatigueIncreasePerHourSprintingMax = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMax - muscle * 0.5f, 1f, 200);
+			fatigue.m_FatigueIncreasePerHourStanding = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourStanding - muscle * 0.08f, 1f, 5);
+			fatigue.m_FatigueIncreasePerHourWalking = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourWalking - muscle * 0.08f, 1f, 10);
+			fatigue.m_FatigueIncreasePerHourSprintingMin = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMin - muscle * 0.7f, 1f, 100);
+			fatigue.m_FatigueIncreasePerHourSprintingMax = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourSprintingMax - muscle * 0.7f, 1f, 200);
 
 			fatigue.m_RestedThreshold = Mathf.Clamp(fatigue.m_RestedThreshold + muscle, 0, 99.9f);
 			fatigue.m_SlightlyTiredThreshold = Mathf.Clamp(fatigue.m_SlightlyTiredThreshold + muscle, 0, 99.9f);
@@ -135,8 +135,8 @@ namespace Muscle
 
 			var climb = GameManager.m_PlayerClimbRope;
 			climb.m_FatigueDrainPerSecondClimbingUp = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingUp - muscle * 0.02f, 0.1f, 1);
-			climb.m_FatigueDrainPerSecondClimbingHolding = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingHolding - muscle * 0.02f, 0.1f, 1);
-			climb.m_FatigueDrainPerSecondClimbingDown = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingDown - muscle * 0.02f, 0.1f, 1);
+			climb.m_FatigueDrainPerSecondClimbingHolding = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingHolding - muscle * 0.01f, 0.1f, 1);
+			climb.m_FatigueDrainPerSecondClimbingDown = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingDown - muscle * 0.01f, 0.1f, 1);
 			Muscle.Instance.Logger?.Msg($"Climb: { climb.m_FatigueDrainPerSecondClimbingUp } / {climb.m_FatigueDrainPerSecondClimbingHolding} / { climb.m_FatigueDrainPerSecondClimbingDown }");
 
 			var move = GameManager.m_PlayerMovement;
@@ -180,24 +180,23 @@ namespace Muscle
 			
 			if (GameManager.m_Hypothermia.HasHypothermia())
 			{
-				requiredEaten *= 1.05f;
-				requiredEaten2 *= 1.05f;
+				requiredEaten *= 1.1f;
+				requiredEaten2 *= 1.1f;
 			}
 			if (GameManager.m_Infection.HasInfection())
 			{
-				requiredEaten *= 1.05f;
-				requiredEaten2 *= 1.05f;
+				requiredEaten *= 1.1f;
+				requiredEaten2 *= 1.1f;
 			}
 			if (GameManager.m_IntestinalParasites.HasIntestinalParasites())
 			{
-				requiredEaten *= 1.025f;
-				requiredEaten2 *= 1.025f;
+				requiredEaten *= 1.05f;
+				requiredEaten2 *= 1.05f;
 			}
-			requiredEaten *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.005f);
-			requiredEaten2 *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.005f);
+			requiredEaten *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.01f);
+			requiredEaten2 *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.01f);
             Muscle.Instance.Logger?.Msg($"------Slept last 24 hours: { slept24hrs }, eatenSince: { eatenSince } / {requiredEaten} / {requiredEaten2}, {GameManager.m_Condition.GetConditionLevel().ToString()} / {ConditionLevel.VeryInjured.ToString()}");
 			
-			ClearMuscle();
 			var impact = 0f;
 			if (slept24hrs <= 4 || eatenSince < requiredEaten || burnedSince < 20 * passedHours + 100 * Muscle.Instance.ModData.AppliedCarryWeight || GameManager.m_Condition.GetConditionLevel() >= ConditionLevel.VeryInjured)
 			{
@@ -212,6 +211,7 @@ namespace Muscle
 			}
 			if (impact != 0)
 			{
+				ClearMuscle();
 				Muscle.Instance.ModData.AppliedCarryWeight += impact;
 				ApplyMuscle(Muscle.Instance.ModData.AppliedCarryWeight);
 			}
@@ -283,9 +283,9 @@ namespace Muscle
 			Muscle.Instance.ModData.LastCaloriesBurned = GameManager.m_PlayerGameStats.m_CaloriesBurned;
 			Muscle.Instance.ModData.LastCaloriesEaten = GameManager.m_PlayerGameStats.m_CaloriesEaten;
 
-            float eatenThreshold1 = 250 + 160 * sinceLast * Settings.options.growthDifficulty;
-            float eatenThreshold2 = 250 + 180 * sinceLast * Settings.options.growthDifficulty;
-            float eatenThreshold3 = 300 + 200 * sinceLast * Settings.options.growthDifficulty;
+            float eatenThreshold1 = 250 + (140 + Muscle.Instance.ModData.AppliedCarryWeight * 10) * sinceLast * Settings.options.growthDifficulty;
+            float eatenThreshold2 = 250 + (160 + Muscle.Instance.ModData.AppliedCarryWeight * 10) * sinceLast * Settings.options.growthDifficulty;
+            float eatenThreshold3 = 300 + (180 + Muscle.Instance.ModData.AppliedCarryWeight * 10) * sinceLast * Settings.options.growthDifficulty;
             Muscle.Instance.Logger?.Msg($"------Slept: { conslept } / 4, eatenSince: { eatenSince } / {eatenThreshold1} / {eatenThreshold2} / {eatenThreshold3}, {GameManager.m_Condition.GetConditionLevel().ToString()} / {ConditionLevel.Injured.ToString()}");
 
 			if (conslept <= 4)
