@@ -7,15 +7,15 @@ namespace Muscle
 	{
 		[Name("Initial Muscle")]
 		[Description("The muscle you start with")]
-		[Slider(-5f, 5f)]
+		[Slider(-10f, 10f)]
 		public float init = 0;
 		[Name("Max Muscle")]
 		[Description("The max muscle you could have")]
-		[Slider(0, 5f)]
+		[Slider(0, 15f)]
 		public float max = 5;
 		[Name("Min Muscle")]
 		[Description("The min muscle you could have")]
-		[Slider(-5, 0)]
+		[Slider(-15, 0)]
 		public float min = -3;
 		[Name("Reduction Threshold Scale")]
 		[Description("Higher means it's easier to trigger daily muscle reduction.")]
@@ -23,7 +23,7 @@ namespace Muscle
 		public float reductionDifficulty = 1;
 		[Name("Reduction Impact Scale")]
 		[Description("Higher means it shrink more when reduction is triggered.")]
-		[Slider(0.25f, 3f)]
+		[Slider(0.25f, 5f)]
 		public float reductionScale = 1;
 		[Name("Reduction Frequency")]
 		[Description("How many hours between each reduction attempt. Lower value does not speed up reduction, only makes it smoother.")]
@@ -35,7 +35,7 @@ namespace Muscle
 		public float growthDifficulty = 1;
 		[Name("Growth Impact Scale")]
 		[Description("Higher means it grows more when growth is triggered.")]
-		[Slider(0.5f, 3f)]
+		[Slider(0.25f, 5f)]
 		public float growthScale = 1;
 	}
 	internal static class Settings
