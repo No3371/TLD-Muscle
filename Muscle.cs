@@ -234,7 +234,7 @@ namespace Muscle
         public void LoadData ()
 		{
 			CalculatedHours = int.Parse(Muscle.Instance.ModSave.Load("calculatedHours") ?? "0");
-			AppliedCarryWeight = float.Parse(Muscle.Instance.ModSave.Load("appliedCarryweight") ?? "0");
+			AppliedCarryWeight = float.Parse(Muscle.Instance.ModSave.Load("appliedCarryweight") ?? Settings.options.init.ToString());
 			LastCaloriesEaten = float.Parse(Muscle.Instance.ModSave.Load("lastCaloriesEaten") ?? "0");
 			LastCaloriesBurned = float.Parse(Muscle.Instance.ModSave.Load("lastCaloriesBurned") ?? "0");
 			LastCaloriesEaten_Losing = float.Parse(Muscle.Instance.ModSave.Load("lastCaloriesEatenDaily") ?? "0");
