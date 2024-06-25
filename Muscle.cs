@@ -8,8 +8,8 @@ using MelonLoader;
 using MelonLoader.TinyJSON;
 using ModData;
 using UnityEngine;
-using FiligranisSkills;
 using Il2CppTLD.News;
+using Il2CppTLD.IntBackedUnit;
 
 namespace Muscle
 {
@@ -28,6 +28,11 @@ namespace Muscle
 
 			uConsole.RegisterCommand("reset_muscle", new Action(() => {
 				ModData.AppliedCarryWeight = Settings.options.init;
+			}));
+
+			uConsole.RegisterCommand("set_muscle", new Action(() => {
+				if (uConsole.GetNumParameters() == 1 && uConsole.TryGetFloat(out var f))
+					ModData.AppliedCarryWeight = f;
 			}));
 
 			Moment.Moment.RegisterExecutor(this);
@@ -63,14 +68,15 @@ namespace Muscle
 		{
 			var encumber = GameManager.m_Encumber;
             float appliedCarryWeight = Muscle.Instance.ModData.AppliedCarryWeight;
-			Muscle.Instance.Logger?.Msg($"Clearing muscle: { appliedCarryWeight } ({ encumber.m_MaxCarryCapacityKG })");
-            encumber.m_MaxCarryCapacityKG -= appliedCarryWeight;
-			encumber.m_MaxCarryCapacityWhenExhaustedKG -= appliedCarryWeight;
-			encumber.m_NoSprintCarryCapacityKG -= appliedCarryWeight;
-			encumber.m_NoWalkCarryCapacityKG -= appliedCarryWeight;
-			encumber.m_EncumberLowThresholdKG -= appliedCarryWeight;
-			encumber.m_EncumberMedThresholdKG -= appliedCarryWeight;
-			encumber.m_EncumberHighThresholdKG -= appliedCarryWeight;
+			Muscle.Instance.Logger?.Msg($"Clearing muscle: { appliedCarryWeight } ({ encumber.GetMaxCarryCapacityKG() })");
+            ItemWeight appliedCarryWeightWeight = ItemWeight.FromKilograms(appliedCarryWeight);
+            encumber.m_MaxCarryCapacity              -= appliedCarryWeightWeight;
+            encumber.m_MaxCarryCapacityWhenExhausted -= appliedCarryWeightWeight;
+            encumber.m_NoSprintCarryCapacity         -= appliedCarryWeightWeight;
+            encumber.m_NoWalkCarryCapacity           -= appliedCarryWeightWeight;
+            encumber.m_EncumberLowThreshold          -= appliedCarryWeightWeight;
+            encumber.m_EncumberMedThreshold          -= appliedCarryWeightWeight;
+            encumber.m_EncumberHighThreshold         -= appliedCarryWeightWeight;
 
 			var fatigue = GameManager.m_Fatigue;
 			fatigue.m_FatigueIncreasePerHourStanding = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourStanding + appliedCarryWeight * 0.08f, 1f, 5);
@@ -104,19 +110,20 @@ namespace Muscle
 			struggle.m_TapDecreasePerSecond = Mathf.Clamp(struggle.m_TapDecreasePerSecond + appliedCarryWeight * 0.4f, 10f, 30f);
 			Muscle.Instance.Logger?.Msg($"Struggle onHit: { struggle.m_FleeChanceOnHit } / decrease per sec: { struggle.m_TapDecreasePerSecond }");
 
-			Muscle.Instance.Logger?.Msg($"Cleared muscle: { encumber.m_MaxCarryCapacityKG }");
+			Muscle.Instance.Logger?.Msg($"Cleared muscle: { encumber.GetMaxCarryCapacityKG() }");
 		}
 		public void ApplyMuscle (float muscle)
 		{
 			var encumber = GameManager.m_Encumber;
-			Muscle.Instance.Logger?.Msg($"Applying muscle: { muscle } ({ encumber.m_MaxCarryCapacityKG })");
-            encumber.m_MaxCarryCapacityKG += muscle;
-			encumber.m_MaxCarryCapacityWhenExhaustedKG += muscle;
-			encumber.m_NoSprintCarryCapacityKG += muscle;
-			encumber.m_NoWalkCarryCapacityKG += muscle;
-			encumber.m_EncumberLowThresholdKG += muscle;
-			encumber.m_EncumberMedThresholdKG += muscle;
-			encumber.m_EncumberHighThresholdKG += muscle;
+			Muscle.Instance.Logger?.Msg($"Applying muscle: { muscle } ({ encumber.GetMaxCarryCapacityKG() })");
+            ItemWeight muscleWeight = ItemWeight.FromKilograms(muscle);
+            encumber.m_MaxCarryCapacity              += muscleWeight;
+            encumber.m_MaxCarryCapacityWhenExhausted += muscleWeight;
+            encumber.m_NoSprintCarryCapacity         += muscleWeight;
+            encumber.m_NoWalkCarryCapacity           += muscleWeight;
+            encumber.m_EncumberLowThreshold          += muscleWeight;
+            encumber.m_EncumberMedThreshold          += muscleWeight;
+            encumber.m_EncumberHighThreshold         += muscleWeight;
 
 			var fatigue = GameManager.m_Fatigue;
 			fatigue.m_FatigueIncreasePerHourStanding = Mathf.Clamp(fatigue.m_FatigueIncreasePerHourStanding - muscle * 0.08f, 1f, 5);
@@ -151,7 +158,7 @@ namespace Muscle
 			struggle.m_TapDecreasePerSecond = Mathf.Clamp(struggle.m_TapDecreasePerSecond - muscle * 0.4f, 10f, 30f);
 			Muscle.Instance.Logger?.Msg($"Struggle onHit: { struggle.m_FleeChanceOnHit } / decrease per sec: { struggle.m_TapDecreasePerSecond }");
 
-			MelonLogger.Msg($"Applied muscle: { encumber.m_MaxCarryCapacityKG }");
+			MelonLogger.Msg($"Applied muscle: { encumber.GetMaxCarryCapacityKG() }");
 		}
 
 
@@ -264,7 +271,6 @@ namespace Muscle
 	{
 		internal static void Postfix ()
 		{
-			// FiligranisSkills.FiligranisSkills.IncreaseSkillPoints("testSkill", 8);
 
 			float conslept = GameManager.m_Rest.m_NumSecondsSleeping/3600f;
 			if (conslept < 5)
@@ -366,7 +372,7 @@ namespace Muscle
 			}
 			else
 				Muscle.Instance.ModData.LoadData();
-			Muscle.Instance.Logger?.Msg($"Loaded Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.m_MaxCarryCapacityKG }");
+			Muscle.Instance.Logger?.Msg($"Loaded Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.GetMaxCarryCapacityKG() }");
 			Muscle.Instance.ApplyMuscle(Muscle.Instance.ModData.AppliedCarryWeight);
 			if (!Moment.Moment.IsScheduled(Muscle.Instance.ScheduledEventExecutorId, "losingMuscle"))
 				Moment.Moment.ScheduleRelative(Muscle.Instance, new EventRequest((0, Settings.options.reductionFreq, 0), "losingMuscle"));
@@ -390,7 +396,7 @@ namespace Muscle
 				Muscle.Instance.Logger?.Msg($"Cleared in memory muscle data.");
 			}
 			Muscle.Instance.ModData.SaveData();
-			Muscle.Instance.Logger?.Msg($"Saved Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.m_MaxCarryCapacityKG }");
+			Muscle.Instance.Logger?.Msg($"Saved Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.GetMaxCarryCapacityKG() }");
 			if (!Moment.Moment.IsScheduled(Muscle.Instance.ScheduledEventExecutorId, "losingMuscle"))
 				Moment.Moment.ScheduleRelative(Muscle.Instance, new EventRequest((0, Settings.options.reductionFreq, 0), "losingMuscle"));
 		}

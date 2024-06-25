@@ -80,11 +80,11 @@
         <Reference Include="Il2CppTLD.Stats" />
         <Reference Include="Il2CppTLD.TimeLib" />
         <Reference Include="Il2CppTLD.Trial" />
+        <Reference Include="Il2CppTLD.IntBackedUnit" />
         <Reference Include="Il2CppTLD.UserGeneratedContent" />
         <Reference Include="ModComponent"/>
         <Reference Include="ModSettings"/>
         <Reference Include="ModData"/>
-        <Reference Include="Moment"/>
         <Reference Include="FiligranisSkills"/>
         <Reference Include="Unity.Mathematics" />
         <Reference Include="Unity.TextMeshPro" />
@@ -100,6 +100,9 @@
         </Reference>
         <Reference Include="KeyboardUtilities" />
     </ItemGroup>
+	<ItemGroup>
+	  <Reference Include="Moment" />
+	</ItemGroup>
     <Target Name="PostBuild" AfterTargets="PostBuildEvent">
         <Exec Command="xcopy /y /d  &quot;$(TargetPath)&quot; &quot;$(TheLongDarkPath)\Mods&quot;" />
     </Target>
