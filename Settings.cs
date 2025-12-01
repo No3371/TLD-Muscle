@@ -7,11 +7,11 @@ namespace Muscle
 	{
 		[Name("Initial Muscle")]
 		[Description("The muscle you start with")]
-		[Slider(-10f, 10f)]
+		[Slider(-10f, 100f)]
 		public float init = 0;
 		[Name("Max Muscle")]
 		[Description("The max muscle you could have")]
-		[Slider(0, 15f)]
+		[Slider(0, 215f)]
 		public float max = 5;
 		[Name("Min Muscle")]
 		[Description("The min muscle you could have")]
@@ -31,11 +31,11 @@ namespace Muscle
 		public int reductionFreq = 22;
 		[Name("Growth Threshold Scale")]
 		[Description("Higher means it's harder to trigger muscle growth.")]
-		[Slider(0.5f, 2f)]
+		[Slider(0.25f, 2f)]
 		public float growthDifficulty = 1;
 		[Name("Growth Impact Scale")]
 		[Description("Higher means it grows more when growth is triggered.")]
-		[Slider(0.25f, 5f)]
+		[Slider(0.25f, 15f)]
 		public float growthScale = 1;
 	}
 	internal static class Settings
