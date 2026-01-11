@@ -41,6 +41,23 @@ namespace Muscle
 				Moment.Moment.RegisterExecutor(this);
 			}
 			MelonCoroutines.Start(DelayedRegistration());
+
+			HarmonyInstance.Patch(
+				AccessTools.Method(typeof(Rest), nameof(Rest.EndSleeping)),
+				null,
+				new HarmonyMethod(typeof(EndSleepingPatch), nameof(EndSleepingPatch.Postfix)));
+			HarmonyInstance.Patch(
+				AccessTools.Method(typeof(QualitySettingsManager), nameof(QualitySettingsManager.ApplyCurrentQualitySettings)),
+				null,
+				new HarmonyMethod(typeof(QualitySettingsManagerPatch), nameof(QualitySettingsManagerPatch.Postfix)));
+    		HarmonyInstance.Patch(
+				AccessTools.Method(typeof(SaveGameSystem), nameof(SaveGameSystem.RestoreGlobalData)),
+				null,
+				new HarmonyMethod(typeof(RestoreGlobalData), nameof(RestoreGlobalData.Postfix)));
+    		HarmonyInstance.Patch(
+				AccessTools.Method(typeof(SaveGameSystem), nameof(SaveGameSystem.SaveGlobalData)),
+				null,
+				new HarmonyMethod(typeof(SaveGlobalData), nameof(SaveGlobalData.Postfix)));
 		}
 
 		public void ClearMuscle ()
@@ -137,7 +154,7 @@ namespace Muscle
 			struggle.m_TapDecreasePerSecond = Mathf.Clamp(struggle.m_TapDecreasePerSecond - muscle * 0.4f, 10f, 30f);
 			// Muscle.Instance.LoggerInstance?.Msg($"  Struggle win on hit %: { struggle.m_FleeChanceOnHit } / bar decrease per second: { struggle.m_TapDecreasePerSecond }");
 
-			Muscle.Instance.LoggerInstance?.Msg($"Applied muscle: { encumber.GetMaxCarryCapacityKG().ToQuantity(1) }");
+			// Muscle.Instance.LoggerInstance?.Msg($"Applied muscle: { encumber.GetMaxCarryCapacityKG().ToQuantity(1) }");
 		}
 
 
@@ -245,7 +262,6 @@ namespace Muscle
         internal TLDDateTime LastLosingTime { get; set; }
     }
 
-    [HarmonyPatch(nameof(Rest), nameof(Rest.EndSleeping))]
 	internal static class EndSleepingPatch
 	{
 		internal static void Postfix ()
@@ -330,12 +346,11 @@ namespace Muscle
 		}
 	}
 
-	[HarmonyPatch(typeof(QualitySettingsManager), nameof(QualitySettingsManager.ApplyCurrentQualitySettings))]
-	internal static class Scene
+	internal static class QualitySettingsManagerPatch
 	{
 		internal static string CurrentScene { get; private set; }
 		internal static bool InGame { get; private set;}
-		static void Postfix ()
+		internal static void Postfix ()
 		{
 			CurrentScene = null!;
 			CurrentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
@@ -346,7 +361,6 @@ namespace Muscle
 		}
 	}
 
-    [HarmonyPatch(nameof(SaveGameSystem), nameof(SaveGameSystem.RestoreGlobalData))]
 	internal static class RestoreGlobalData
 	{
     	[HarmonyPriority(Priority.Low)]
@@ -362,17 +376,16 @@ namespace Muscle
 			}
 			else
 				Muscle.Instance.ModData.LoadData();
-			Muscle.Instance.LoggerInstance?.Msg($"Loaded Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, system: { GameManager.m_Encumber.GetMaxCarryCapacityKG().ToQuantity(1) }");
+			// Muscle.Instance.LoggerInstance?.Msg($"Loaded Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, system: { GameManager.m_Encumber.GetMaxCarryCapacityKG().ToQuantity(1) }");
 			Muscle.Instance.ApplyMuscle(Muscle.Instance.ModData.AppliedCarryWeight);
 			if (!Moment.Moment.IsScheduled(Muscle.Instance.ScheduledEventExecutorId, "losingMuscle"))
 				Moment.Moment.ScheduleRelative(Muscle.Instance, new EventRequest((0, Settings.options.reductionFreq, 0), "losingMuscle"));
 		}
 	}
 
-    [HarmonyPatch(nameof(SaveGameSystem), nameof(SaveGameSystem.SaveGlobalData))]
 	internal static class SaveGlobalData
 	{
-    	[HarmonyPriority(Priority.Low)]
+		[HarmonyPriority(Priority.Low)]
 		internal static void Postfix (SlotData slot)
 		{
             bool inGame = Check.InGame;
@@ -386,7 +399,7 @@ namespace Muscle
 				Muscle.Instance.LoggerInstance?.Msg($"Cleared in memory muscle data.");
 			}
 			Muscle.Instance.ModData.SaveData();
-			Muscle.Instance.LoggerInstance?.Msg($"Saved Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, system: { GameManager.m_Encumber.GetMaxCarryCapacityKG().ToQuantity(1) }");
+			// Muscle.Instance.LoggerInstance?.Msg($"Saved Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, system: { GameManager.m_Encumber.GetMaxCarryCapacityKG().ToQuantity(1) }");
 			if (!Moment.Moment.IsScheduled(Muscle.Instance.ScheduledEventExecutorId, "losingMuscle"))
 				Moment.Moment.ScheduleRelative(Muscle.Instance, new EventRequest((0, Settings.options.reductionFreq, 0), "losingMuscle"));
 		}
