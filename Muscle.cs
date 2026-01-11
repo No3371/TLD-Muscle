@@ -16,15 +16,16 @@ namespace Muscle
     internal class Muscle : MelonMod, Moment.IScheduledEventExecutor
     {
 		internal static Muscle Instance { get; private set; }
-		internal ModDataManager ModSave { get; private set; } = new ModDataManager(nameof(Muscle));
-		internal MuscleData ModData { get; set; } = new MuscleData();
-		// internal MelonLogger.Instance Logger { get; } = new MelonLogger.Instance(nameof(Muscle));
-		internal MelonLogger.Instance Logger { get; }
+		internal ModDataManager ModSave { get; private set; }
+		internal MuscleData ModData { get; set; }
 
         public override void OnInitializeMelon()
 		{
 			Settings.OnLoad();
 			Instance = this;
+
+			ModSave = new ModDataManager(nameof(Muscle));
+			ModData = new MuscleData();
 
 			uConsole.RegisterCommand("reset_muscle", new Action(() => {
 				ModData.AppliedCarryWeight = Settings.options.init;
@@ -35,40 +36,18 @@ namespace Muscle
 					ModData.AppliedCarryWeight = f;
 			}));
 
-			Moment.Moment.RegisterExecutor(this);
-			// Moment.Moment.OnDayChanged += (t) => Muscle.Instance.Logger?.Msg($"{t}");
-
-			// var testSkill = new SkillDefinition()
-			// {
-			// 	Name = "testSkill",
-			// 	DisplayNameLocalized = new LocalizedString() { m_LocalizationID = "Test Skill Name" },
-			// 	TiersDescriptionLocalized = new[] {
-			// 		new LocalizedString() { m_LocalizationID = "Test skill desc 1" },
-			// 		new LocalizedString() { m_LocalizationID = "Test skill desc 1\nTest skill desc 2"},
-			// 		new LocalizedString() { m_LocalizationID = "Test skill desc 3"},
-			// 		new LocalizedString() { m_LocalizationID = "Test skill desc 1\nTest skill desc 1\nTest skill desc 4"},
-			// 		new LocalizedString() { m_LocalizationID = "Test skill desc 5"}
-			// 	},
-			// 	TiersBenefitsLocalized = new[] {
-			// 		new LocalizedString() { m_LocalizationID = "Test skill benefit 1" },
-			// 		new LocalizedString() { m_LocalizationID = "Test skill benefit 1\nTest skill benefit 2" },
-			// 		new LocalizedString() { m_LocalizationID = "Test skill benefit 1\nTest skill benefit 1\nTest skill benefit 3" },
-			// 		new LocalizedString() { m_LocalizationID = "Test skill benefit 4" },
-			// 		new LocalizedString() { m_LocalizationID = "Test skill benefit 5" }
-			// 	},
-			// 	TierThresholds = new [] {0, 10, 20, 30, 40},
-            // 	IconBackgroundId = "ico_skill_large_firstAid",
-            // 	ImageId = "ico_skill_large_firstAid",
-			// 	Icon = Texture2D.whiteTexture
-			// };
-			// FiligranisSkills.FiligranisSkills.RegisterSkill(testSkill);
+			IEnumerator DelayedRegistration () { // Maybe this can fix a dodgy launch crash? If it's because of this?
+				yield return new WaitForSeconds(5);
+				Moment.Moment.RegisterExecutor(this);
+			}
+			MelonCoroutines.Start(DelayedRegistration());
 		}
 
 		public void ClearMuscle ()
 		{
 			var encumber = GameManager.m_Encumber;
             float appliedCarryWeight = Muscle.Instance.ModData.AppliedCarryWeight;
-			Muscle.Instance.Logger?.Msg($"Clearing muscle: { appliedCarryWeight } ({ encumber.GetMaxCarryCapacityKG() })");
+			Muscle.Instance.LoggerInstance?.Msg($"Clearing muscle: { appliedCarryWeight } ({ encumber.GetMaxCarryCapacityKG() })");
             ItemWeight appliedCarryWeightWeight = ItemWeight.FromKilograms(appliedCarryWeight);
             encumber.m_MaxCarryCapacity              -= appliedCarryWeightWeight;
             encumber.m_MaxCarryCapacityWhenExhausted -= appliedCarryWeightWeight;
@@ -89,33 +68,33 @@ namespace Muscle
 			fatigue.m_TiredThreshold = Mathf.Clamp(fatigue.m_TiredThreshold - appliedCarryWeight, 0, 99.9f);
 			fatigue.m_VeryTiredThreshold = Mathf.Clamp(fatigue.m_VeryTiredThreshold - appliedCarryWeight, 0, 99.9f);
 			fatigue.m_ExhaustedThreshold = Mathf.Clamp(fatigue.m_ExhaustedThreshold - appliedCarryWeight, 0, 99.9f);
-			Muscle.Instance.Logger?.Msg($"Fatigue increase: { fatigue.m_FatigueIncreasePerHourStanding } / { fatigue.m_FatigueIncreasePerHourWalking } / { fatigue.m_FatigueIncreasePerHourSprintingMin } ~ { fatigue.m_FatigueIncreasePerHourSprintingMax } ");
-			Muscle.Instance.Logger?.Msg($"Fatigue thresholds: { fatigue.m_RestedThreshold } / { fatigue.m_SlightlyTiredThreshold } / { fatigue.m_TiredThreshold } / { fatigue.m_VeryTiredThreshold } / { fatigue.m_ExhaustedThreshold }");
+			Muscle.Instance.LoggerInstance?.Msg($"Fatigue increase: { fatigue.m_FatigueIncreasePerHourStanding } / { fatigue.m_FatigueIncreasePerHourWalking } / { fatigue.m_FatigueIncreasePerHourSprintingMin } ~ { fatigue.m_FatigueIncreasePerHourSprintingMax } ");
+			Muscle.Instance.LoggerInstance?.Msg($"Fatigue thresholds: { fatigue.m_RestedThreshold } / { fatigue.m_SlightlyTiredThreshold } / { fatigue.m_TiredThreshold } / { fatigue.m_VeryTiredThreshold } / { fatigue.m_ExhaustedThreshold }");
 
 			var climb = GameManager.m_PlayerClimbRope;
 			climb.m_FatigueDrainPerSecondClimbingUp = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingUp + appliedCarryWeight * 0.02f, 0.1f, 1);
 			climb.m_FatigueDrainPerSecondClimbingHolding = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingHolding + appliedCarryWeight * 0.01f, 0.1f, 1);
 			climb.m_FatigueDrainPerSecondClimbingDown = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingDown + appliedCarryWeight * 0.01f, 0.1f, 1);
-			Muscle.Instance.Logger?.Msg($"Climb: { climb.m_FatigueDrainPerSecondClimbingUp } / {climb.m_FatigueDrainPerSecondClimbingHolding} / { climb.m_FatigueDrainPerSecondClimbingDown }");
+			Muscle.Instance.LoggerInstance?.Msg($"Climb: { climb.m_FatigueDrainPerSecondClimbingUp } / {climb.m_FatigueDrainPerSecondClimbingHolding} / { climb.m_FatigueDrainPerSecondClimbingDown }");
 
 			var move = GameManager.m_PlayerMovement;
 			move.m_WindMovementSpeedMultiplierMin = Mathf.Clamp(move.m_WindMovementSpeedMultiplierMin - appliedCarryWeight * 0.02f, 0.1f, 0.85f);
 			move.m_DeepSnowSpeedMultiplierMin = Mathf.Clamp(move.m_DeepSnowSpeedMultiplierMin - appliedCarryWeight * 0.01f, 0.1f, 0.5f);
 			move.m_DeepSnowSpeedMultiplierMax = Mathf.Clamp(move.m_DeepSnowSpeedMultiplierMax - appliedCarryWeight * 0.01f, 0.1f, 0.9f);
-			Muscle.Instance.Logger?.Msg($"Move wind: { move.m_WindMovementSpeedMultiplierMin } ~ { move.m_WindMovementSpeedMultiplierMax }");
-			Muscle.Instance.Logger?.Msg($"Move Deepsnow: { move.m_DeepSnowSpeedMultiplierMin } ~ { move.m_DeepSnowSpeedMultiplierMax }");
+			Muscle.Instance.LoggerInstance?.Msg($"Move wind: { move.m_WindMovementSpeedMultiplierMin } ~ { move.m_WindMovementSpeedMultiplierMax }");
+			Muscle.Instance.LoggerInstance?.Msg($"Move Deepsnow: { move.m_DeepSnowSpeedMultiplierMin } ~ { move.m_DeepSnowSpeedMultiplierMax }");
 
 			var struggle = GameManager.m_PlayerStruggle;
 			struggle.m_FleeChanceOnHit = Mathf.Clamp(struggle.m_FleeChanceOnHit - appliedCarryWeight * 0.2f, 1f, 5f);
 			struggle.m_TapDecreasePerSecond = Mathf.Clamp(struggle.m_TapDecreasePerSecond + appliedCarryWeight * 0.4f, 10f, 30f);
-			Muscle.Instance.Logger?.Msg($"Struggle onHit: { struggle.m_FleeChanceOnHit } / decrease per sec: { struggle.m_TapDecreasePerSecond }");
+			Muscle.Instance.LoggerInstance?.Msg($"Struggle onHit: { struggle.m_FleeChanceOnHit } / decrease per sec: { struggle.m_TapDecreasePerSecond }");
 
-			Muscle.Instance.Logger?.Msg($"Cleared muscle: { encumber.GetMaxCarryCapacityKG() }");
+			Muscle.Instance.LoggerInstance?.Msg($"Cleared muscle: { encumber.GetMaxCarryCapacityKG() }");
 		}
 		public void ApplyMuscle (float muscle)
 		{
 			var encumber = GameManager.m_Encumber;
-			Muscle.Instance.Logger?.Msg($"Applying muscle: { muscle } ({ encumber.GetMaxCarryCapacityKG() })");
+			Muscle.Instance.LoggerInstance?.Msg($"Applying muscle: { muscle } ({ encumber.GetMaxCarryCapacityKG() })");
             ItemWeight muscleWeight = ItemWeight.FromKilograms(muscle);
             encumber.m_MaxCarryCapacity              += muscleWeight;
             encumber.m_MaxCarryCapacityWhenExhausted += muscleWeight;
@@ -137,28 +116,28 @@ namespace Muscle
 			fatigue.m_VeryTiredThreshold = Mathf.Clamp(fatigue.m_VeryTiredThreshold + muscle, 0, 99.9f);
 			fatigue.m_ExhaustedThreshold = Mathf.Clamp(fatigue.m_ExhaustedThreshold + muscle, 0, 99.9f);
 
-			Muscle.Instance.Logger?.Msg($"Fatigue increase: { fatigue.m_FatigueIncreasePerHourStanding } / { fatigue.m_FatigueIncreasePerHourWalking } / { fatigue.m_FatigueIncreasePerHourSprintingMin } ~ { fatigue.m_FatigueIncreasePerHourSprintingMax } ");
-			Muscle.Instance.Logger?.Msg($"Fatigue thresholds: { fatigue.m_RestedThreshold } / { fatigue.m_SlightlyTiredThreshold } / { fatigue.m_TiredThreshold } / { fatigue.m_VeryTiredThreshold } / { fatigue.m_ExhaustedThreshold }");
+			Muscle.Instance.LoggerInstance?.Msg($"Fatigue increase: { fatigue.m_FatigueIncreasePerHourStanding } / { fatigue.m_FatigueIncreasePerHourWalking } / { fatigue.m_FatigueIncreasePerHourSprintingMin } ~ { fatigue.m_FatigueIncreasePerHourSprintingMax } ");
+			Muscle.Instance.LoggerInstance?.Msg($"Fatigue thresholds: { fatigue.m_RestedThreshold } / { fatigue.m_SlightlyTiredThreshold } / { fatigue.m_TiredThreshold } / { fatigue.m_VeryTiredThreshold } / { fatigue.m_ExhaustedThreshold }");
 
 			var climb = GameManager.m_PlayerClimbRope;
 			climb.m_FatigueDrainPerSecondClimbingUp = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingUp - muscle * 0.02f, 0.1f, 1);
 			climb.m_FatigueDrainPerSecondClimbingHolding = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingHolding - muscle * 0.01f, 0.1f, 1);
 			climb.m_FatigueDrainPerSecondClimbingDown = Mathf.Clamp(climb.m_FatigueDrainPerSecondClimbingDown - muscle * 0.01f, 0.1f, 1);
-			Muscle.Instance.Logger?.Msg($"Climb: { climb.m_FatigueDrainPerSecondClimbingUp } / {climb.m_FatigueDrainPerSecondClimbingHolding} / { climb.m_FatigueDrainPerSecondClimbingDown }");
+			Muscle.Instance.LoggerInstance?.Msg($"Climb: { climb.m_FatigueDrainPerSecondClimbingUp } / {climb.m_FatigueDrainPerSecondClimbingHolding} / { climb.m_FatigueDrainPerSecondClimbingDown }");
 
 			var move = GameManager.m_PlayerMovement;
 			move.m_WindMovementSpeedMultiplierMin = Mathf.Clamp(move.m_WindMovementSpeedMultiplierMin + muscle * 0.02f, 0.1f, 0.85f);
 			move.m_DeepSnowSpeedMultiplierMin = Mathf.Clamp(move.m_DeepSnowSpeedMultiplierMin + muscle * 0.01f, 0.1f, 0.5f);
 			move.m_DeepSnowSpeedMultiplierMax = Mathf.Clamp(move.m_DeepSnowSpeedMultiplierMax + muscle * 0.01f, 0.1f, 0.9f);
-			Muscle.Instance.Logger?.Msg($"Move wind: { move.m_WindMovementSpeedMultiplierMin } ~ { move.m_WindMovementSpeedMultiplierMax }");
-			Muscle.Instance.Logger?.Msg($"Move Deepsnow: { move.m_DeepSnowSpeedMultiplierMin } ~ { move.m_DeepSnowSpeedMultiplierMax }");
+			Muscle.Instance.LoggerInstance?.Msg($"Move wind: { move.m_WindMovementSpeedMultiplierMin } ~ { move.m_WindMovementSpeedMultiplierMax }");
+			Muscle.Instance.LoggerInstance?.Msg($"Move Deepsnow: { move.m_DeepSnowSpeedMultiplierMin } ~ { move.m_DeepSnowSpeedMultiplierMax }");
 
 			var struggle = GameManager.m_PlayerStruggle;
 			struggle.m_FleeChanceOnHit = Mathf.Clamp(struggle.m_FleeChanceOnHit + muscle * 0.2f, 1f, 5f);
 			struggle.m_TapDecreasePerSecond = Mathf.Clamp(struggle.m_TapDecreasePerSecond - muscle * 0.4f, 10f, 30f);
-			Muscle.Instance.Logger?.Msg($"Struggle onHit: { struggle.m_FleeChanceOnHit } / decrease per sec: { struggle.m_TapDecreasePerSecond }");
+			Muscle.Instance.LoggerInstance?.Msg($"Struggle onHit: { struggle.m_FleeChanceOnHit } / decrease per sec: { struggle.m_TapDecreasePerSecond }");
 
-			MelonLogger.Msg($"Applied muscle: { encumber.GetMaxCarryCapacityKG() }");
+			Muscle.Instance.LoggerInstance.Msg($"Applied muscle: { encumber.GetMaxCarryCapacityKG() }");
 		}
 
 
@@ -180,7 +159,7 @@ namespace Muscle
 			float eatenSince = GameManager.m_PlayerGameStats.m_CaloriesEaten - Muscle.Instance.ModData.LastCaloriesEaten_Losing;
 			float burnedSince = GameManager.m_PlayerGameStats.m_CaloriesBurned - Muscle.Instance.ModData.LastCaloriesBurned_Losing;
 			float slept24hrs = GameManager.m_Rest.GetNumHoursSleptInLastTwentyFour();
-			Muscle.Instance.Logger?.Msg($"------Muscle reduction attempt: { Moment.Moment.Now }");
+			Muscle.Instance.LoggerInstance?.Msg($"Muscle reduction attempt: { Moment.Moment.Now }");
 			var passedHours = (Moment.Moment.Now - ModData.LastLosingTime).TotalMinutes/60f;
             float requiredEaten = 35 * passedHours + 15 * passedHours * Settings.options.reductionDifficulty * Muscle.Instance.ModData.AppliedCarryWeight;
             float requiredEaten2 = 25 * passedHours + 12 * passedHours * Settings.options.reductionDifficulty * Muscle.Instance.ModData.AppliedCarryWeight;
@@ -202,7 +181,7 @@ namespace Muscle
 			}
 			requiredEaten *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.01f);
 			requiredEaten2 *= (1 + GameManager.GetBrokenRibComponent().GetBrokenRibCount() * 0.01f);
-            Muscle.Instance.Logger?.Msg($"------Slept last 24 hours: { slept24hrs }, eatenSince: { eatenSince } / {requiredEaten} / {requiredEaten2}, {GameManager.m_Condition.GetConditionLevel().ToString()} / {ConditionLevel.VeryInjured.ToString()}");
+            Muscle.Instance.LoggerInstance?.Msg($"Slept last 24 hours: { slept24hrs }hrs, eatenSince: { eatenSince } / {requiredEaten} / {requiredEaten2}, {GameManager.m_Condition.GetConditionLevel().ToString()} / {ConditionLevel.VeryInjured.ToString()}");
 			
 			var impact = 0f;
 			if (slept24hrs <= 4 || eatenSince < requiredEaten || burnedSince < 20 * passedHours + 100 * Muscle.Instance.ModData.AppliedCarryWeight || GameManager.m_Condition.GetConditionLevel() >= ConditionLevel.VeryInjured)
@@ -214,7 +193,7 @@ namespace Muscle
 					impact -= 0.02f * (passedHours/22f);
 				if (slept24hrs <= 2 || eatenSince < requiredEaten2 || GameManager.m_Condition.GetConditionLevel() >= ConditionLevel.NearDeath)
 					impact -= 0.02f * (passedHours/22f);
-				Muscle.Instance.Logger?.Msg($"------Muscle reduced: {impact * Settings.options.reductionScale}kg...");
+				Muscle.Instance.LoggerInstance?.Msg($"Muscle reduced: {impact * Settings.options.reductionScale}kg...");
 			}
 			if (impact != 0)
 			{
@@ -283,8 +262,8 @@ namespace Muscle
             int totalHours = Moment.Moment.Now.TotalHours, sinceLast = totalHours - Muscle.Instance.ModData.CalculatedHours;
 			float eatenSince = GameManager.m_PlayerGameStats.m_CaloriesEaten - Muscle.Instance.ModData.LastCaloriesEaten;
 			float burnedSince = GameManager.m_PlayerGameStats.m_CaloriesBurned - Muscle.Instance.ModData.LastCaloriesBurned;
-            Muscle.Instance.Logger?.Msg($"------{Moment.Moment.Now} Total Hours: {totalHours} ({sinceLast})");
-			Muscle.Instance.Logger?.Msg($"------Burned: {GameManager.m_PlayerGameStats.m_CaloriesBurned} ({ burnedSince:+#;-#}), Eaten: {GameManager.m_PlayerGameStats.m_CaloriesEaten} ({ eatenSince:+#;-#})");
+            Muscle.Instance.LoggerInstance?.Msg($"{Moment.Moment.Now} Total Hours: {totalHours} ({sinceLast})");
+			Muscle.Instance.LoggerInstance?.Msg($"Burned: {GameManager.m_PlayerGameStats.m_CaloriesBurned} cals ({ burnedSince:+#;-#}), Eaten: {GameManager.m_PlayerGameStats.m_CaloriesEaten} cals ({ eatenSince:+#;-#})");
 			Muscle.Instance.ModData.CalculatedHours = totalHours;
 			Muscle.Instance.ModData.LastCaloriesBurned = GameManager.m_PlayerGameStats.m_CaloriesBurned;
 			Muscle.Instance.ModData.LastCaloriesEaten = GameManager.m_PlayerGameStats.m_CaloriesEaten;
@@ -292,26 +271,26 @@ namespace Muscle
             float eatenThreshold1 = 250 + (140 + Muscle.Instance.ModData.AppliedCarryWeight * 10) * sinceLast * Settings.options.growthDifficulty;
             float eatenThreshold2 = 250 + (160 + Muscle.Instance.ModData.AppliedCarryWeight * 10) * sinceLast * Settings.options.growthDifficulty;
             float eatenThreshold3 = 300 + (180 + Muscle.Instance.ModData.AppliedCarryWeight * 10) * sinceLast * Settings.options.growthDifficulty;
-            Muscle.Instance.Logger?.Msg($"------Slept: { conslept } / 4, eatenSince: { eatenSince } / {eatenThreshold1} / {eatenThreshold2} / {eatenThreshold3}, {GameManager.m_Condition.GetConditionLevel().ToString()} / {ConditionLevel.Injured.ToString()}");
+            Muscle.Instance.LoggerInstance?.Msg($"Slept: { conslept } / 4hrs, eatenSince: { eatenSince } / {eatenThreshold1} / {eatenThreshold2} / {eatenThreshold3} cals, {GameManager.m_Condition.GetConditionLevel().ToString()} / {ConditionLevel.Injured.ToString()}");
 
 			if (conslept <= 4)
 			{
-				MelonLogger.Msg($"Not growing muscle... reason: slept not long enough.");
+				Muscle.Instance.LoggerInstance.Msg($"Not growing muscle... reason: slept not long enough hours.");
 				return;
 			}
 			else if (eatenSince < eatenThreshold1)
 			{
-				MelonLogger.Msg($"Not growing muscle... reason: eaten not enough.");
+				Muscle.Instance.LoggerInstance.Msg($"Not growing muscle... reason: eaten not enough calories.");
 				return;
 			}
 			else if (burnedSince < 1000 + 150 * Settings.options.growthDifficulty)
 			{
-				MelonLogger.Msg($"Not growing muscle... reason: burned not enough.");
+				Muscle.Instance.LoggerInstance.Msg($"Not growing muscle... reason: burned not enough calories.");
 				return;
 			}
 			else if (GameManager.m_Condition.GetConditionLevel() >= ConditionLevel.Injured)
 			{
-				MelonLogger.Msg($"Not growing muscle... reason: not healthy enough.");
+				Muscle.Instance.LoggerInstance.Msg($"Not growing muscle... reason: not healthy enough.");
 				return;
 			}
 			if (conslept > 10) conslept = 10;
@@ -326,7 +305,7 @@ namespace Muscle
 				if (i >= 8) impact += 0.015f * scale;
 				else impact += 0.01f * scale;
 			}
-			MelonLogger.Msg($"------Growing { impact }kg...");
+			Muscle.Instance.LoggerInstance.Msg($"Growing { impact }kg...");
 
 			Muscle.Instance.ClearMuscle();
 
@@ -347,7 +326,7 @@ namespace Muscle
 		internal static bool InGame { get; private set;}
 		static void Postfix ()
 		{
-			CurrentScene = null;
+			CurrentScene = null!;
 			CurrentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
 			InGame = false;
 			if (!Check.InGame)
@@ -363,16 +342,16 @@ namespace Muscle
 		internal static void Postfix ()
 		{
             bool inGame = Check.InGame;
-			Muscle.Instance.Logger?.Msg($"---RestoreGlobalData---(InGame: {inGame})");
+			// Muscle.Instance.LoggerInstance?.Msg($"---RestoreGlobalData---(InGame: {inGame})");
             if (!inGame) return;
 			if (Muscle.Instance.ModSave.Load("calculatedHours") == null)
 			{
 				Muscle.Instance.ModData.CalculatedHours = Moment.Moment.Now.TotalHours;
-				Muscle.Instance.Logger?.Msg($"Reset calculated hours.");
+				Muscle.Instance.LoggerInstance?.Msg($"Reset calculated hours.");
 			}
 			else
 				Muscle.Instance.ModData.LoadData();
-			Muscle.Instance.Logger?.Msg($"Loaded Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.GetMaxCarryCapacityKG() }");
+			Muscle.Instance.LoggerInstance?.Msg($"Loaded Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.GetMaxCarryCapacityKG() }");
 			Muscle.Instance.ApplyMuscle(Muscle.Instance.ModData.AppliedCarryWeight);
 			if (!Moment.Moment.IsScheduled(Muscle.Instance.ScheduledEventExecutorId, "losingMuscle"))
 				Moment.Moment.ScheduleRelative(Muscle.Instance, new EventRequest((0, Settings.options.reductionFreq, 0), "losingMuscle"));
@@ -386,17 +365,17 @@ namespace Muscle
 		internal static void Postfix (SlotData slot)
 		{
             bool inGame = Check.InGame;
-			Muscle.Instance.Logger?.Msg($"---SaveGlobalData---(InGame: {inGame}, { slot.m_GameId } / { slot.m_BaseName } / { slot.m_InternalName } / { slot.m_DisplayName })");
+			// Muscle.Instance.LoggerInstance?.Msg($"---SaveGlobalData---(InGame: {inGame}, { slot.m_GameId } / { slot.m_BaseName } / { slot.m_InternalName } / { slot.m_DisplayName })");
             if (!inGame) return;
 			if (Muscle.Instance.ModSave.Load("calculatedHours") == null) // First entry
 			{
-				Muscle.Instance.Logger?.Msg($"First entry... calculatedHours: {Muscle.Instance.ModSave.Load("calculatedHours")}");
+				Muscle.Instance.LoggerInstance?.Msg($"First entry... calculatedHours: {Muscle.Instance.ModSave.Load("calculatedHours")}");
 				Muscle.Instance.ModData = new(); // Clear data in memory
 				Muscle.Instance.ModData.CalculatedHours = Moment.Moment.Now.TotalHours;
-				Muscle.Instance.Logger?.Msg($"Cleared in memory muscle data.");
+				Muscle.Instance.LoggerInstance?.Msg($"Cleared in memory muscle data.");
 			}
 			Muscle.Instance.ModData.SaveData();
-			Muscle.Instance.Logger?.Msg($"Saved Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.GetMaxCarryCapacityKG() }");
+			Muscle.Instance.LoggerInstance?.Msg($"Saved Muscle: { Muscle.Instance.ModData.AppliedCarryWeight }, E: { GameManager.m_Encumber.GetMaxCarryCapacityKG() }");
 			if (!Moment.Moment.IsScheduled(Muscle.Instance.ScheduledEventExecutorId, "losingMuscle"))
 				Moment.Moment.ScheduleRelative(Muscle.Instance, new EventRequest((0, Settings.options.reductionFreq, 0), "losingMuscle"));
 		}
